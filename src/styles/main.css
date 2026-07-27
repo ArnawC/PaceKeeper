@@ -93,6 +93,7 @@ button:disabled {
 .save-profile,
 .control-button,
 .counter-button,
+.pspo-launch-card,
 .mode-card {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -154,8 +155,36 @@ button:disabled {
 
 .home-screen {
   display: grid;
+  gap: 18px;
   min-height: calc(100vh - 128px);
   align-content: center;
+}
+
+.pspo-launch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pspo-launch-card {
+  display: grid;
+  min-height: 190px;
+  place-items: center;
+  padding: 24px;
+  color: #ffffff;
+  background: var(--primary-strong);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.pspo-launch-card:hover {
+  border-color: var(--accent);
+}
+
+.pspo-launch-card strong {
+  max-width: 12ch;
+  font-size: 2.6rem;
+  line-height: 1;
 }
 
 .mode-grid {
@@ -193,6 +222,44 @@ button:disabled {
 .workspace {
   display: grid;
   gap: 14px;
+}
+
+.pspo-screen {
+  display: grid;
+  grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-width: 320px;
+  min-height: 100vh;
+  padding: 36px 24px;
+  color: var(--ink);
+  background: var(--bg);
+  user-select: none;
+}
+
+.pspo-screen.is-editable {
+  cursor: pointer;
+}
+
+.pspo-timer,
+.pspo-count {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.pspo-timer {
+  align-self: end;
+  padding-bottom: 24px;
+  color: var(--muted);
+  font-size: 8rem;
+}
+
+.pspo-count {
+  align-self: start;
+  color: var(--primary-strong);
+  font-size: 22rem;
 }
 
 .mode-title {
@@ -492,6 +559,7 @@ button:disabled {
 }
 
 @media (max-width: 880px) {
+  .pspo-launch-grid,
   .mode-grid,
   .run-layout,
   .status-grid,
@@ -505,6 +573,18 @@ button:disabled {
 
   .mode-card strong {
     font-size: 1.6rem;
+  }
+
+  .pspo-launch-card strong {
+    font-size: 2rem;
+  }
+
+  .pspo-timer {
+    font-size: 6rem;
+  }
+
+  .pspo-count {
+    font-size: 16rem;
   }
 
   .time-readout strong {
@@ -534,8 +614,13 @@ button:disabled {
   .run-layout,
   .status-grid,
   .settings-panel,
+  .pspo-launch-grid,
   .config-panel {
     grid-template-columns: 1fr;
+  }
+
+  .pspo-launch-card {
+    min-height: 140px;
   }
 
   .mode-card {
@@ -560,6 +645,18 @@ button:disabled {
     font-size: 4rem;
   }
 
+  .pspo-screen {
+    padding: 28px 16px;
+  }
+
+  .pspo-timer {
+    font-size: 4rem;
+  }
+
+  .pspo-count {
+    font-size: 11rem;
+  }
+
   .counter-value {
     font-size: 4.5rem;
   }
@@ -570,5 +667,30 @@ button:disabled {
 
   .controls {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-height: 700px) {
+  .pspo-screen {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .pspo-timer {
+    font-size: 5rem;
+  }
+
+  .pspo-count {
+    font-size: 15rem;
+  }
+}
+
+@media (max-height: 560px) {
+  .pspo-timer {
+    font-size: 3.6rem;
+  }
+
+  .pspo-count {
+    font-size: 10rem;
   }
 }

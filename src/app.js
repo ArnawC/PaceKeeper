@@ -16,6 +16,7 @@ import {
 import { IntervalEngine } from './core/intervalEngine.js';
 import { loadAppState, saveAppState } from './core/storage.js';
 import { Timer } from './core/timer.js';
+import { getPspoCountForElapsed, PSPO_CONFIG } from './core/pspo.js';
 import {
   getEmomDurationMs,
   getEmomIntervalMs,
@@ -41,6 +42,11 @@ const MODES = [
   { id: 'emom', short: 'EM', labelKey: 'emom', hintKey: 'emomHint' },
   { id: 'intervals', short: 'IN', labelKey: 'intervals', hintKey: 'intervalsHint' },
   { id: 'stopwatch', short: 'SW', labelKey: 'stopwatch', hintKey: 'stopwatchHint' },
+];
+
+const PSPO_MODES = [
+  { id: 'pspo-1', label: 'modo PSPO 1' },
+  { id: 'pspo-1-edit', label: 'edit PSPO 1' },
 ];
 
 const STRINGS = {
@@ -176,19 +182,29 @@ class PaceKeeperApp {
   constructor(root) {
     this.root = root;
     const savedState = loadAppState();
-    const activeMode = MODES.some((mode) => mode.id === savedState.lastMode) ? savedState.lastMode : null;
+    const currentPath = window.location.pathname;
+    const initialRouteMode = this.getModeFromPath(currentPath);
+    const shouldUseSavedMode = currentPath !== '/home' && currentPath !== '/';
+    const activeMode = this.isKnownMode(initialRouteMode)
+      ? initialRouteMode
+      : shouldUseSavedMode && this.isKnownMode(savedState.lastMode)
+        ? savedState.lastMode
+        : null;
     this.state = {
       ...savedState,
       activeMode,
       lastMode: activeMode,
       elapsedMs: 0,
       count: 0,
+      pspoAutoIncrements: 0,
+      pspoLastIncrementAtMs: 0,
       timerState: 'idle',
       settingsOpen: false,
       draftProfileName: '',
     };
     this.wakeLock = null;
     this.timer = new Timer({
+      tickMs: 100,
       onTick: (snapshot) => this.handleTick(snapshot),
       onComplete: () => this.handleComplete(),
     });
@@ -202,6 +218,7 @@ class PaceKeeperApp {
     this.root.addEventListener('change', (event) => this.handleChange(event));
     this.root.addEventListener('input', (event) => this.handleInput(event));
     document.addEventListener('keydown', (event) => this.handleKeydown(event));
+    window.addEventListener('popstate', () => this.handleLocationChange());
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && this.timer.isRunning()) {
         this.syncWakeLock();
@@ -209,6 +226,14 @@ class PaceKeeperApp {
     });
     this.applyTheme();
     this.configureEngines();
+
+    if (this.isPspoMode(this.state.activeMode)) {
+      this.syncUrl({ replace: true });
+      this.startPspoSession();
+      return;
+    }
+
+    this.syncUrl({ replace: true });
     this.render();
   }
 
@@ -219,6 +244,11 @@ class PaceKeeperApp {
 
   render() {
     if (!this.root) {
+      return;
+    }
+
+    if (this.isPspoMode(this.state.activeMode)) {
+      this.root.innerHTML = this.renderPspoScreen();
       return;
     }
 
@@ -256,6 +286,15 @@ class PaceKeeperApp {
   renderHome() {
     return `
       <section class="home-screen" aria-label="PaceKeeper modes">
+        <div class="pspo-launch-grid" aria-label="PSPO 1">
+          ${PSPO_MODES.map(
+            (mode) => `
+              <button class="pspo-launch-card" type="button" data-mode="${mode.id}">
+                <strong>${mode.label}</strong>
+              </button>
+            `
+          ).join('')}
+        </div>
         <div class="mode-grid">
           ${MODES.map(
             (mode) => `
@@ -268,6 +307,21 @@ class PaceKeeperApp {
           ).join('')}
         </div>
       </section>
+    `;
+  }
+
+  renderPspoScreen() {
+    const isEditable = this.state.activeMode === 'pspo-1-edit';
+
+    return `
+      <main
+        class="pspo-screen ${isEditable ? 'is-editable' : ''}"
+        ${isEditable ? 'role="button" tabindex="0"' : ''}
+        aria-label="${isEditable ? 'edit PSPO 1' : 'modo PSPO 1'}"
+      >
+        <output class="pspo-timer" aria-label="Temporizador">${formatClock(this.state.elapsedMs)}</output>
+        <output class="pspo-count" aria-label="Pregunta">${this.getPspoCount()}</output>
+      </main>
     `;
   }
 
@@ -565,6 +619,11 @@ class PaceKeeperApp {
   }
 
   handleClick(event) {
+    if (this.state.activeMode === 'pspo-1-edit' && event.target.closest('.pspo-screen')) {
+      this.incrementPspoEditCount();
+      return;
+    }
+
     const modeButton = event.target.closest('[data-mode]');
 
     if (modeButton) {
@@ -657,6 +716,19 @@ class PaceKeeperApp {
   }
 
   handleKeydown(event) {
+    if (this.state.activeMode === 'pspo-1-edit') {
+      if (event.code === 'Space' || event.code === 'Enter') {
+        event.preventDefault();
+        this.incrementPspoEditCount();
+      }
+
+      return;
+    }
+
+    if (this.isPspoMode(this.state.activeMode)) {
+      return;
+    }
+
     if (!this.state.activeMode || !this.state.settings.keyboardShortcuts) {
       return;
     }
@@ -682,6 +754,12 @@ class PaceKeeperApp {
     this.state.elapsedMs = snapshot.elapsedMs;
     this.state.timerState = snapshot.state;
 
+    if (this.isPspoMode(this.state.activeMode)) {
+      this.updatePspoCount(snapshot.elapsedMs);
+      this.render();
+      return;
+    }
+
     if (this.state.activeMode !== 'stopwatch') {
       this.intervalEngine.update(snapshot.elapsedMs);
     }
@@ -705,7 +783,7 @@ class PaceKeeperApp {
   }
 
   selectMode(mode) {
-    if (!MODES.some((item) => item.id === mode)) {
+    if (!this.isKnownMode(mode)) {
       return;
     }
 
@@ -714,6 +792,13 @@ class PaceKeeperApp {
     this.resetSession({ render: false });
     this.configureEngines();
     this.saveState();
+    this.syncUrl();
+
+    if (this.isPspoMode(mode)) {
+      this.startPspoSession();
+      return;
+    }
+
     this.render();
   }
 
@@ -722,6 +807,7 @@ class PaceKeeperApp {
     this.state.lastMode = null;
     this.resetSession({ render: false });
     this.saveState();
+    this.syncUrl();
     this.render();
   }
 
@@ -747,6 +833,7 @@ class PaceKeeperApp {
   resetSession({ render = true } = {}) {
     this.state.elapsedMs = 0;
     this.state.count = 0;
+    this.state.pspoAutoIncrements = 0;
     this.state.timerState = 'idle';
     this.timer.reset({ emit: false });
     this.intervalEngine.reset(0);
@@ -761,6 +848,68 @@ class PaceKeeperApp {
     const limit = this.getCounterLimit();
     const nextCount = this.state.count + delta;
     this.state.count = clamp(nextCount, 0, limit);
+    this.render();
+  }
+
+  startPspoSession() {
+    this.state.elapsedMs = 0;
+    this.state.count = 1;
+    this.state.pspoAutoIncrements = 0;
+    this.state.pspoLastIncrementAtMs = 0;
+    this.state.timerState = 'idle';
+    this.timer.reset({ emit: false });
+    this.configureEngines();
+    this.timer.start();
+    this.syncWakeLock();
+  }
+
+  updatePspoCount(elapsedMs) {
+    if (this.state.activeMode === 'pspo-1') {
+      const updated = getPspoCountForElapsed({
+        elapsedMs,
+        lastIncrementAtMs: this.state.pspoLastIncrementAtMs,
+        currentCount: this.state.count,
+        intervalMs: PSPO_CONFIG.intervalMs,
+        totalQuestions: PSPO_CONFIG.totalQuestions,
+      });
+
+      this.state.count = updated.count;
+      this.state.pspoLastIncrementAtMs = updated.lastIncrementAtMs;
+      this.state.pspoAutoIncrements = updated.count - 1;
+      return;
+    }
+
+    const updated = getPspoCountForElapsed({
+      elapsedMs,
+      lastIncrementAtMs: this.state.pspoLastIncrementAtMs,
+      currentCount: this.state.count,
+      intervalMs: PSPO_CONFIG.intervalMs,
+      totalQuestions: PSPO_CONFIG.totalQuestions,
+    });
+
+    if (updated.count > this.state.count) {
+      this.state.count = updated.count;
+      this.state.pspoLastIncrementAtMs = updated.lastIncrementAtMs;
+      this.state.pspoAutoIncrements = updated.count - 1;
+    }
+  }
+
+  incrementPspoEditCount() {
+    if (this.state.timerState === 'complete') {
+      return;
+    }
+
+    const updated = getPspoCountForElapsed({
+      elapsedMs: this.state.elapsedMs,
+      lastIncrementAtMs: this.state.pspoLastIncrementAtMs,
+      currentCount: this.state.count,
+      intervalMs: PSPO_CONFIG.intervalMs,
+      totalQuestions: PSPO_CONFIG.totalQuestions,
+    });
+
+    this.state.count = Math.min(PSPO_CONFIG.totalQuestions, updated.count + 1);
+    this.state.pspoLastIncrementAtMs = this.state.elapsedMs;
+    this.state.pspoAutoIncrements = this.state.count - 1;
     this.render();
   }
 
@@ -810,6 +959,7 @@ class PaceKeeperApp {
     this.resetSession({ render: false });
     this.configureEngines();
     this.saveState();
+    this.syncUrl();
     this.render();
   }
 
@@ -842,6 +992,90 @@ class PaceKeeperApp {
 
   getActiveMode() {
     return MODES.find((mode) => mode.id === this.state.activeMode);
+  }
+
+  getRouteForMode(mode) {
+    if (!mode) {
+      return '/home';
+    }
+
+    if (mode === 'pspo-1') {
+      return '/timePSPO';
+    }
+
+    if (mode === 'pspo-1-edit') {
+      return '/editPSPO';
+    }
+
+    return `/${mode}`;
+  }
+
+  getModeFromPath(pathname = window.location.pathname) {
+    const normalized = pathname.split('?')[0].split('#')[0].replace(/^\/+|\/+$/g, '').toLowerCase();
+
+    if (!normalized || normalized === 'home') {
+      return null;
+    }
+
+    if (normalized === 'timepspo') {
+      return 'pspo-1';
+    }
+
+    if (normalized === 'editpspo') {
+      return 'pspo-1-edit';
+    }
+
+    return this.isKnownMode(normalized) ? normalized : null;
+  }
+
+  syncUrl({ replace = false } = {}) {
+    const nextRoute = this.getRouteForMode(this.state.activeMode);
+    const currentPath = window.location.pathname;
+
+    if (currentPath === nextRoute) {
+      return;
+    }
+
+    if (replace) {
+      window.history.replaceState(null, '', nextRoute);
+      return;
+    }
+
+    window.history.pushState(null, '', nextRoute);
+  }
+
+  handleLocationChange() {
+    const nextMode = this.getModeFromPath(window.location.pathname);
+
+    if (nextMode === this.state.activeMode) {
+      this.render();
+      return;
+    }
+
+    this.state.activeMode = nextMode;
+    this.state.lastMode = nextMode;
+    this.resetSession({ render: false });
+    this.configureEngines();
+    this.saveState();
+
+    if (this.isPspoMode(this.state.activeMode)) {
+      this.startPspoSession();
+      return;
+    }
+
+    this.render();
+  }
+
+  isKnownMode(mode) {
+    return MODES.some((item) => item.id === mode) || this.isPspoMode(mode);
+  }
+
+  isPspoMode(mode) {
+    return PSPO_MODES.some((item) => item.id === mode);
+  }
+
+  getPspoCount() {
+    return clamp(this.state.count || 1, 1, PSPO_CONFIG.totalQuestions);
   }
 
   getConfig() {
@@ -877,6 +1111,10 @@ class PaceKeeperApp {
 
     if (this.state.activeMode === 'intervals') {
       return getIntervalDurationMs(config);
+    }
+
+    if (this.isPspoMode(this.state.activeMode)) {
+      return PSPO_CONFIG.durationMs;
     }
 
     return null;
@@ -935,6 +1173,10 @@ class PaceKeeperApp {
 
     if (this.state.activeMode === 'intervals' && config.targetCycles > 0) {
       return config.targetCycles;
+    }
+
+    if (this.isPspoMode(this.state.activeMode)) {
+      return PSPO_CONFIG.totalQuestions;
     }
 
     return 9999;

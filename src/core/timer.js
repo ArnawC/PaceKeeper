@@ -1,4 +1,4 @@
-const DEFAULT_TICK_MS = 250;
+const DEFAULT_TICK_MS = 100;
 
 export class Timer {
   constructor({ durationMs = null, tickMs = DEFAULT_TICK_MS, onTick = () => {}, onComplete = () => {} } = {}) {
