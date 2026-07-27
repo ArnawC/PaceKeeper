@@ -227,6 +227,7 @@ class PaceKeeperApp {
     this.root.addEventListener('change', (event) => this.handleChange(event));
     this.root.addEventListener('input', (event) => this.handleInput(event));
     document.addEventListener('keydown', (event) => this.handleKeydown(event));
+    window.addEventListener('hashchange', () => this.handleLocationChange());
     window.addEventListener('popstate', () => this.handleLocationChange());
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && this.timer.isRunning()) {
@@ -1066,22 +1067,23 @@ class PaceKeeperApp {
 
   getRouteForMode(mode) {
     if (!mode) {
-      return '/home';
+      return '#/home';
     }
 
     if (mode === 'pspo-1') {
-      return '/timePSPO';
+      return '#/timePSPO';
     }
 
     if (mode === 'pspo-1-edit') {
-      return '/editPSPO';
+      return '#/editPSPO';
     }
 
-    return `/${mode}`;
+    return `#/${mode}`;
   }
 
-  getModeFromPath(pathname = window.location.pathname) {
-    const normalized = pathname.split('?')[0].split('#')[0].replace(/^\/+|\/+$/g, '').toLowerCase();
+  getModeFromPath(pathname = window.location.pathname, hash = window.location.hash) {
+    const path = hash ? hash.slice(1) : pathname;
+    const normalized = path.split('?')[0].split('#')[0].replace(/^\/+|\/+$/g, '').toLowerCase();
 
     if (!normalized || normalized === 'home') {
       return null;
@@ -1100,22 +1102,22 @@ class PaceKeeperApp {
 
   syncUrl({ replace = false } = {}) {
     const nextRoute = this.getRouteForMode(this.state.activeMode);
-    const currentPath = window.location.pathname;
+    const currentHash = window.location.hash || '#/home';
 
-    if (currentPath === nextRoute) {
+    if (currentHash === nextRoute) {
       return;
     }
 
     if (replace) {
-      window.history.replaceState(null, '', nextRoute);
+      window.location.replace(nextRoute);
       return;
     }
 
-    window.history.pushState(null, '', nextRoute);
+    window.location.hash = nextRoute.slice(1);
   }
 
   handleLocationChange() {
-    const nextMode = this.getModeFromPath(window.location.pathname);
+    const nextMode = this.getModeFromPath(window.location.pathname, window.location.hash);
 
     if (nextMode === this.state.activeMode) {
       this.render();
