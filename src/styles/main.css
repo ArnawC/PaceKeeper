@@ -1,0 +1,574 @@
+:root {
+  color-scheme: light;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-strong: #f1f5f9;
+  --ink: #111827;
+  --muted: #64748b;
+  --line: #d8dee8;
+  --primary: #0f766e;
+  --primary-strong: #115e59;
+  --accent: #f59e0b;
+  --good: #15803d;
+  --bad: #b91c1c;
+  --shadow: 0 18px 50px rgba(15, 23, 42, 0.11);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #101312;
+  --surface: #171c1b;
+  --surface-strong: #202827;
+  --ink: #f8fafc;
+  --muted: #a8b5c4;
+  --line: #33413f;
+  --primary: #2dd4bf;
+  --primary-strong: #14b8a6;
+  --accent: #fbbf24;
+  --good: #4ade80;
+  --bad: #fb7185;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(15, 118, 110, 0.1), transparent 260px),
+    var(--bg);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.app-shell {
+  width: min(1160px, calc(100% - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 18px 0 32px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0 18px;
+}
+
+.brand,
+.settings-button,
+.text-button,
+.save-profile,
+.control-button,
+.counter-button,
+.mode-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.brand img {
+  flex: 0 0 auto;
+  border-radius: 8px;
+}
+
+.brand span {
+  display: grid;
+  min-width: 0;
+}
+
+.brand strong {
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.brand small,
+.mode-title p,
+.mode-card small,
+.quiet-label,
+.progress-detail {
+  color: var(--muted);
+}
+
+.settings-button,
+.text-button,
+.save-profile {
+  min-height: 42px;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+.settings-button:hover,
+.text-button:hover,
+.save-profile:hover,
+.mode-card:hover {
+  border-color: var(--primary);
+}
+
+.main-area {
+  display: grid;
+  gap: 16px;
+}
+
+.home-screen {
+  display: grid;
+  min-height: calc(100vh - 128px);
+  align-content: center;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mode-card {
+  display: grid;
+  min-height: 180px;
+  align-content: space-between;
+  gap: 22px;
+  padding: 20px;
+  text-align: left;
+  box-shadow: var(--shadow);
+}
+
+.mode-card strong {
+  font-size: 2rem;
+  line-height: 1.05;
+}
+
+.mode-badge {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 8px;
+  color: #ffffff;
+  background: var(--primary-strong);
+  font-weight: 900;
+}
+
+.workspace {
+  display: grid;
+  gap: 14px;
+}
+
+.mode-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.mode-title h1 {
+  margin: 0;
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.mode-title p {
+  margin: 6px 0 0;
+}
+
+.config-panel,
+.profile-panel,
+.settings-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.config-panel {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 12px;
+}
+
+.config-panel.compact {
+  display: flex;
+  align-items: center;
+  min-height: 72px;
+}
+
+.profile-panel {
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1.2fr) auto;
+  align-items: end;
+  padding: 12px;
+}
+
+.settings-panel {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 16px;
+  padding: 14px;
+}
+
+.field,
+.setting-control {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field.grow {
+  width: 100%;
+}
+
+.field span,
+.setting-control span,
+.section-kicker,
+.progress-copy span,
+.status-card span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.field input,
+.field select,
+.setting-control input,
+.setting-control select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--ink);
+  background: var(--surface-strong);
+}
+
+.setting-control.inline {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+}
+
+.setting-control.inline input {
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+}
+
+.setting-control output {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.run-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.timer-panel,
+.counter-panel {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.timer-panel {
+  gap: 20px;
+  min-height: 310px;
+  padding: 24px;
+  align-content: center;
+}
+
+.counter-panel {
+  gap: 18px;
+  min-height: 310px;
+  padding: 20px;
+  align-content: space-between;
+}
+
+.time-readout {
+  display: grid;
+  gap: 4px;
+}
+
+.time-readout span {
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.time-readout strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 7rem;
+  line-height: 0.95;
+}
+
+.progress-wrap {
+  display: grid;
+  gap: 9px;
+}
+
+.progress-copy {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.progress-track {
+  height: 16px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  transition: width 160ms ease;
+}
+
+.progress-detail {
+  min-height: 20px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(112px, 0.35fr);
+  gap: 10px;
+}
+
+.control-button {
+  min-height: 64px;
+  padding: 0 18px;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.control-button.primary {
+  color: #ffffff;
+  border-color: var(--primary-strong);
+  background: var(--primary-strong);
+}
+
+.counter-value {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  font-size: 6.75rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.counter-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.counter-button {
+  min-height: 76px;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.counter-button.increment {
+  color: #ffffff;
+  border-color: var(--good);
+  background: var(--good);
+}
+
+.counter-button.decrement {
+  color: #ffffff;
+  border-color: var(--bad);
+  background: var(--bad);
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.status-card {
+  display: grid;
+  gap: 8px;
+  min-height: 94px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.status-card strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+.tone-ahead {
+  border-color: color-mix(in srgb, var(--good), var(--line) 55%);
+}
+
+.tone-ahead strong {
+  color: var(--good);
+}
+
+.tone-behind {
+  border-color: color-mix(in srgb, var(--bad), var(--line) 55%);
+}
+
+.tone-behind strong {
+  color: var(--bad);
+}
+
+.screen-flash body::after {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  content: '';
+  background: rgba(245, 158, 11, 0.28);
+  animation: flash 240ms ease-out;
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 880px) {
+  .mode-grid,
+  .run-layout,
+  .status-grid,
+  .settings-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-card strong {
+    font-size: 1.6rem;
+  }
+
+  .time-readout strong {
+    font-size: 5.5rem;
+  }
+
+  .counter-value {
+    font-size: 5.5rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-shell {
+    width: min(100% - 20px, 1160px);
+    padding-top: 10px;
+  }
+
+  .topbar {
+    align-items: stretch;
+  }
+
+  .settings-button {
+    min-width: 92px;
+  }
+
+  .mode-grid,
+  .run-layout,
+  .status-grid,
+  .settings-panel,
+  .config-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-card {
+    min-height: 138px;
+  }
+
+  .mode-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mode-title h1 {
+    font-size: 1.8rem;
+  }
+
+  .timer-panel,
+  .counter-panel {
+    min-height: 0;
+  }
+
+  .time-readout strong {
+    font-size: 4rem;
+  }
+
+  .counter-value {
+    font-size: 4.5rem;
+  }
+
+  .status-card strong {
+    font-size: 1.35rem;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+  }
+}
