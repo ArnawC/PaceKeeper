@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = {
   keepAwake: false,
   keyboardShortcuts: true,
   language: 'es',
+  counterMode: 'manual',
 };
 
 export const DEFAULT_CONFIGS = {
@@ -87,6 +88,7 @@ export function getDefaultState() {
     configs: structuredCloneSafe(DEFAULT_CONFIGS),
     profiles: structuredCloneSafe(DEFAULT_PROFILES),
     lastMode: null,
+    selectedProfileId: '',
   };
 }
 
@@ -115,6 +117,7 @@ function mergeState(state = {}) {
       ? state.profiles
       : structuredCloneSafe(DEFAULT_PROFILES),
     lastMode: state.lastMode ?? null,
+    selectedProfileId: state.selectedProfileId ?? '',
   };
 }
 

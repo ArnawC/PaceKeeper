@@ -17,6 +17,7 @@ import { IntervalEngine } from './core/intervalEngine.js';
 import { loadAppState, saveAppState } from './core/storage.js';
 import { Timer } from './core/timer.js';
 import { getPspoCountForElapsed, PSPO_CONFIG } from './core/pspo.js';
+import { COUNTER_MODES, normalizeCounterMode } from './core/counterMode.js';
 import {
   getEmomDurationMs,
   getEmomIntervalMs,
@@ -55,6 +56,9 @@ const STRINGS = {
     settings: 'Settings',
     close: 'Close',
     home: 'Home',
+    manual: 'Manual',
+    automatic: 'Automatic',
+    counterMode: 'Counter mode',
     exam: 'Exam',
     emom: 'EMOM',
     intervals: 'Interval',
@@ -116,6 +120,9 @@ const STRINGS = {
     settings: 'Ajustes',
     close: 'Cerrar',
     home: 'Inicio',
+    manual: 'Manual',
+    automatic: 'Automático',
+    counterMode: 'Modo de contador',
     exam: 'Examen',
     emom: 'EMOM',
     intervals: 'Intervalo',
@@ -201,6 +208,7 @@ class PaceKeeperApp {
       timerState: 'idle',
       settingsOpen: false,
       draftProfileName: '',
+      selectedProfileId: savedState.selectedProfileId ?? '',
     };
     this.wakeLock = null;
     this.timer = new Timer({
@@ -215,6 +223,7 @@ class PaceKeeperApp {
 
   init() {
     this.root.addEventListener('click', (event) => this.handleClick(event));
+    this.root.addEventListener('pointerdown', (event) => this.handlePointerDown(event));
     this.root.addEventListener('change', (event) => this.handleChange(event));
     this.root.addEventListener('input', (event) => this.handleInput(event));
     document.addEventListener('keydown', (event) => this.handleKeydown(event));
@@ -340,6 +349,7 @@ class PaceKeeperApp {
         </div>
         ${this.renderConfig()}
         ${this.renderProfiles()}
+        ${this.renderCounterModeSelector()}
         <div class="run-layout">
           <section class="timer-panel" aria-live="polite">
             ${this.renderTimerHero(metrics)}
@@ -443,12 +453,12 @@ class PaceKeeperApp {
       <section class="profile-panel" aria-label="${this.t('profiles')}">
         <label class="field">
           <span>${this.t('profiles')}</span>
-          <select data-profile-select>
+          <select data-profile-select value="${escapeHtml(this.state.selectedProfileId)}">
             <option value="">${this.t('chooseProfile')}</option>
             ${this.state.profiles
               .map(
                 (profile) => `
-                  <option value="${profile.id}" ${profile.id === selectedProfile ? 'selected' : ''}>
+                  <option value="${profile.id}" ${profile.id === this.state.selectedProfileId ? 'selected' : ''}>
                     ${escapeHtml(profile.name)}
                   </option>
                 `
@@ -462,6 +472,19 @@ class PaceKeeperApp {
         </label>
         <button class="save-profile" type="button" data-action="save-profile">${this.t('saveProfile')}</button>
       </section>
+    `;
+  }
+
+  renderCounterModeSelector() {
+    return `
+      <label class="field">
+        <span>${this.t('counterMode')}</span>
+        <select data-counter-mode>
+          ${COUNTER_MODES.map((mode) => `
+            <option value="${mode}" ${this.state.settings.counterMode === mode ? 'selected' : ''}>${this.t(mode)}</option>
+          `).join('')}
+        </select>
+      </label>
     `;
   }
 
@@ -618,6 +641,23 @@ class PaceKeeperApp {
     `;
   }
 
+  handlePointerDown(event) {
+    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') {
+      return;
+    }
+
+    if (this.state.activeMode === 'pspo-1-edit' && event.target.closest('.pspo-screen')) {
+      this.incrementPspoEditCount();
+      return;
+    }
+
+    const actionButton = event.target.closest('[data-action]');
+
+    if (actionButton) {
+      this.handleClick(event);
+    }
+  }
+
   handleClick(event) {
     if (this.state.activeMode === 'pspo-1-edit' && event.target.closest('.pspo-screen')) {
       this.incrementPspoEditCount();
@@ -685,8 +725,19 @@ class PaceKeeperApp {
       return;
     }
 
-    if (target.matches('[data-profile-select]') && target.value) {
-      this.loadProfile(target.value);
+    if (target.matches('[data-profile-select]')) {
+      if (target.value) {
+        this.loadProfile(target.value);
+      } else {
+        this.state.selectedProfileId = '';
+        this.saveState();
+        this.render();
+      }
+      return;
+    }
+
+    if (target.matches('[data-counter-mode]')) {
+      this.updateSetting('counterMode', normalizeCounterMode(target.value));
       return;
     }
 
@@ -741,12 +792,12 @@ class PaceKeeperApp {
 
     if (event.code === 'Space') {
       event.preventDefault();
-      this.changeCount(1);
+      this.handleCounterInput(this.state.settings.counterMode === 'automatic' ? 1 : 1);
     }
 
     if (event.code === 'Backspace') {
       event.preventDefault();
-      this.changeCount(-1);
+      this.handleCounterInput(-1);
     }
   }
 
@@ -782,6 +833,18 @@ class PaceKeeperApp {
     flashScreen(settings.flash);
   }
 
+  handleCounterInput(delta) {
+    if (this.state.settings.counterMode === 'automatic') {
+      const nextValue = this.state.count + delta;
+      const max = this.getCounterLimit();
+      this.state.count = clamp(nextValue, 0, max);
+      this.render();
+      return;
+    }
+
+    this.changeCount(delta);
+  }
+
   selectMode(mode) {
     if (!this.isKnownMode(mode)) {
       return;
@@ -789,6 +852,7 @@ class PaceKeeperApp {
 
     this.state.activeMode = mode;
     this.state.lastMode = mode;
+    this.state.selectedProfileId = '';
     this.resetSession({ render: false });
     this.configureEngines();
     this.saveState();
@@ -805,6 +869,7 @@ class PaceKeeperApp {
   goHome() {
     this.state.activeMode = null;
     this.state.lastMode = null;
+    this.state.selectedProfileId = '';
     this.resetSession({ render: false });
     this.saveState();
     this.syncUrl();
@@ -818,16 +883,19 @@ class PaceKeeperApp {
     this.intervalEngine.reset(0);
     this.timer.start();
     this.syncWakeLock();
+    this.render();
   }
 
   pauseSession() {
     this.timer.pause();
     this.syncWakeLock();
+    this.render();
   }
 
   resumeSession() {
     this.timer.resume();
     this.syncWakeLock();
+    this.render();
   }
 
   resetSession({ render = true } = {}) {
@@ -955,6 +1023,7 @@ class PaceKeeperApp {
 
     this.state.activeMode = profile.mode;
     this.state.lastMode = profile.mode;
+    this.state.selectedProfileId = profile.id;
     this.state.configs[profile.mode] = this.normalizeConfig(profile.mode, profile.config);
     this.resetSession({ render: false });
     this.configureEngines();
@@ -979,6 +1048,7 @@ class PaceKeeperApp {
         config: this.getConfig(),
       },
     ];
+    this.state.selectedProfileId = this.state.profiles[this.state.profiles.length - 1].id;
     this.state.draftProfileName = '';
     this.saveState();
     this.render();
@@ -1231,6 +1301,7 @@ class PaceKeeperApp {
       configs: this.state.configs,
       profiles: this.state.profiles,
       lastMode: this.state.lastMode,
+      selectedProfileId: this.state.selectedProfileId,
     });
   }
 }

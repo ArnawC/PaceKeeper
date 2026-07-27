@@ -1,37 +1,36 @@
 :root {
   color-scheme: light;
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-strong: #f1f5f9;
-  --ink: #111827;
+  --bg: #f4f7fb;
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-strong: #ffffff;
+  --ink: #0f172a;
   --muted: #64748b;
-  --line: #d8dee8;
+  --line: rgba(148, 163, 184, 0.28);
   --primary: #0f766e;
   --primary-strong: #115e59;
   --accent: #f59e0b;
-  --good: #15803d;
-  --bad: #b91c1c;
-  --shadow: 0 18px 50px rgba(15, 23, 42, 0.11);
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --good: #10b981;
+  --bad: #ef4444;
+  --shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #101312;
-  --surface: #171c1b;
-  --surface-strong: #202827;
+  --bg: #071018;
+  --surface: rgba(11, 18, 26, 0.8);
+  --surface-strong: #101926;
   --ink: #f8fafc;
-  --muted: #a8b5c4;
-  --line: #33413f;
+  --muted: #94a3b8;
+  --line: rgba(148, 163, 184, 0.18);
   --primary: #2dd4bf;
   --primary-strong: #14b8a6;
   --accent: #fbbf24;
-  --good: #4ade80;
+  --good: #34d399;
   --bad: #fb7185;
-  --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  --shadow: 0 24px 70px rgba(2, 6, 23, 0.42);
 }
 
 * {
@@ -49,7 +48,8 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    linear-gradient(180deg, rgba(15, 118, 110, 0.1), transparent 260px),
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.16), transparent 28%),
+    linear-gradient(135deg, rgba(15, 118, 110, 0.08), transparent 45%),
     var(--bg);
 }
 
@@ -61,11 +61,19 @@ select {
 
 button {
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
 }
 
 button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+  transform: none;
 }
 
 #app {
@@ -73,7 +81,7 @@ button:disabled {
 }
 
 .app-shell {
-  width: min(1160px, calc(100% - 32px));
+  width: min(1200px, calc(100% - 32px));
   min-height: 100vh;
   margin: 0 auto;
   padding: 18px 0 32px;
@@ -84,7 +92,13 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 0 18px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
 }
 
 .brand,
@@ -96,7 +110,7 @@ button:disabled {
 .pspo-launch-card,
 .mode-card {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 16px;
   color: var(--ink);
   background: var(--surface);
 }
@@ -106,13 +120,14 @@ button:disabled {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-align: left;
 }
 
 .brand img {
   flex: 0 0 auto;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
 }
 
 .brand span {
@@ -136,16 +151,19 @@ button:disabled {
 .settings-button,
 .text-button,
 .save-profile {
-  min-height: 42px;
-  padding: 0 14px;
-  font-weight: 700;
+  min-height: 44px;
+  padding: 0 16px;
+  font-weight: 800;
+  background: var(--surface-strong);
 }
 
 .settings-button:hover,
 .text-button:hover,
 .save-profile:hover,
-.mode-card:hover {
+.mode-card:hover,
+.pspo-launch-card:hover {
   border-color: var(--primary);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
 .main-area {
@@ -172,18 +190,14 @@ button:disabled {
   place-items: center;
   padding: 24px;
   color: #ffffff;
-  background: var(--primary-strong);
+  background: linear-gradient(135deg, var(--primary-strong), var(--primary));
   box-shadow: var(--shadow);
   text-align: center;
 }
 
-.pspo-launch-card:hover {
-  border-color: var(--accent);
-}
-
 .pspo-launch-card strong {
   max-width: 12ch;
-  font-size: 2.6rem;
+  font-size: 2.4rem;
   line-height: 1;
 }
 
@@ -201,21 +215,22 @@ button:disabled {
   padding: 20px;
   text-align: left;
   box-shadow: var(--shadow);
+  background: linear-gradient(180deg, var(--surface) 0%, rgba(255, 255, 255, 0.92) 100%);
 }
 
 .mode-card strong {
-  font-size: 2rem;
+  font-size: 1.8rem;
   line-height: 1.05;
 }
 
 .mode-badge {
   display: inline-grid;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   place-items: center;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #ffffff;
-  background: var(--primary-strong);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   font-weight: 900;
 }
 
@@ -231,7 +246,10 @@ button:disabled {
   min-height: 100vh;
   padding: 36px 24px;
   color: var(--ink);
-  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(245, 158, 11, 0.12));
+  box-shadow: var(--shadow);
   user-select: none;
 }
 
@@ -247,6 +265,7 @@ button:disabled {
   font-variant-numeric: tabular-nums;
   font-weight: 950;
   line-height: 0.9;
+  letter-spacing: -0.03em;
 }
 
 .pspo-timer {
@@ -260,6 +279,7 @@ button:disabled {
   align-self: start;
   color: var(--primary-strong);
   font-size: 22rem;
+  text-shadow: 0 12px 30px rgba(17, 94, 89, 0.14);
 }
 
 .mode-title {
@@ -271,7 +291,7 @@ button:disabled {
 
 .mode-title h1 {
   margin: 0;
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   line-height: 1;
 }
 
@@ -285,14 +305,15 @@ button:disabled {
   display: grid;
   gap: 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 18px;
   background: var(--surface);
+  backdrop-filter: blur(16px);
   box-shadow: var(--shadow);
 }
 
 .config-panel {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: 12px;
+  padding: 14px;
 }
 
 .config-panel.compact {
@@ -304,13 +325,13 @@ button:disabled {
 .profile-panel {
   grid-template-columns: minmax(180px, 1fr) minmax(180px, 1.2fr) auto;
   align-items: end;
-  padding: 12px;
+  padding: 14px;
 }
 
 .settings-panel {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 0 0 16px;
-  padding: 14px;
+  padding: 16px;
 }
 
 .field,
@@ -331,7 +352,7 @@ button:disabled {
 .status-card span {
   font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0;
+  letter-spacing: 0.05em;
   color: var(--muted);
   text-transform: uppercase;
 }
@@ -341,12 +362,21 @@ button:disabled {
 .setting-control input,
 .setting-control select {
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0 10px;
+  border-radius: 12px;
+  padding: 0 12px;
   color: var(--ink);
   background: var(--surface-strong);
+}
+
+.field input:focus,
+.field select:focus,
+.setting-control input:focus,
+.setting-control select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
 }
 
 .setting-control.inline {
@@ -379,21 +409,22 @@ button:disabled {
 .counter-panel {
   display: grid;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 22px;
   background: var(--surface);
+  backdrop-filter: blur(16px);
   box-shadow: var(--shadow);
 }
 
 .timer-panel {
   gap: 20px;
-  min-height: 310px;
+  min-height: 320px;
   padding: 24px;
   align-content: center;
 }
 
 .counter-panel {
   gap: 18px;
-  min-height: 310px;
+  min-height: 320px;
   padding: 20px;
   align-content: space-between;
 }
@@ -429,15 +460,16 @@ button:disabled {
 .progress-track {
   height: 16px;
   overflow: hidden;
-  border-radius: 8px;
-  background: var(--surface-strong);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.24);
 }
 
 .progress-fill {
   display: block;
   height: 100%;
-  border-radius: 8px;
+  border-radius: 999px;
   background: linear-gradient(90deg, var(--primary), var(--accent));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
   transition: width 160ms ease;
 }
 
@@ -458,12 +490,14 @@ button:disabled {
   padding: 0 18px;
   font-size: 1.05rem;
   font-weight: 900;
+  border-radius: 14px;
 }
 
 .control-button.primary {
   color: #ffffff;
   border-color: var(--primary-strong);
-  background: var(--primary-strong);
+  background: linear-gradient(135deg, var(--primary-strong), var(--primary));
+  box-shadow: 0 12px 24px rgba(17, 94, 89, 0.16);
 }
 
 .counter-value {
@@ -484,18 +518,19 @@ button:disabled {
   min-height: 76px;
   font-size: 1.8rem;
   font-weight: 900;
+  border-radius: 14px;
 }
 
 .counter-button.increment {
   color: #ffffff;
   border-color: var(--good);
-  background: var(--good);
+  background: linear-gradient(135deg, var(--good), #059669);
 }
 
 .counter-button.decrement {
   color: #ffffff;
   border-color: var(--bad);
-  background: var(--bad);
+  background: linear-gradient(135deg, var(--bad), #dc2626);
 }
 
 .status-grid {
@@ -510,15 +545,16 @@ button:disabled {
   min-height: 94px;
   padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--surface);
+  backdrop-filter: blur(12px);
 }
 
 .status-card strong {
   min-width: 0;
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   line-height: 1.1;
 }
 
@@ -572,7 +608,7 @@ button:disabled {
   }
 
   .mode-card strong {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
   .pspo-launch-card strong {
@@ -662,7 +698,7 @@ button:disabled {
   }
 
   .status-card strong {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
   }
 
   .controls {
