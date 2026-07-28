@@ -18,6 +18,7 @@ import { loadAppState, saveAppState } from './core/storage.js';
 import { Timer } from './core/timer.js';
 import { getPspoCountForElapsed, PSPO_CONFIG } from './core/pspo.js';
 import { COUNTER_MODES, normalizeCounterMode } from './core/counterMode.js';
+import { createTouchClickGuard } from './core/touchEventGuard.js';
 import {
   getEmomDurationMs,
   getEmomIntervalMs,
@@ -211,6 +212,7 @@ class PaceKeeperApp {
       selectedProfileId: savedState.selectedProfileId ?? '',
     };
     this.wakeLock = null;
+    this.touchClickGuard = createTouchClickGuard();
     this.timer = new Timer({
       tickMs: 100,
       onTick: (snapshot) => this.handleTick(snapshot),
@@ -647,19 +649,21 @@ class PaceKeeperApp {
       return;
     }
 
+    this.touchClickGuard.markPointerDown(event.timeStamp);
+
     if (this.state.activeMode === 'pspo-1-edit' && event.target.closest('.pspo-screen')) {
       this.incrementPspoEditCount();
       return;
     }
-
-    const actionButton = event.target.closest('[data-action]');
-
-    if (actionButton) {
-      this.handleClick(event);
-    }
   }
 
   handleClick(event) {
+    if (this.touchClickGuard.shouldIgnoreClick(event.timeStamp)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     if (this.state.activeMode === 'pspo-1-edit' && event.target.closest('.pspo-screen')) {
       this.incrementPspoEditCount();
       return;
